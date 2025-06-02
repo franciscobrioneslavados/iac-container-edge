@@ -1,4 +1,4 @@
-# IaC ECS WordPress
+# IaC Container Edge
 
 ### Infraestructura como código (IaC) para desplegar un entorno completo de WordPress en AWS utilizando ECS, PostgreSQL, EFS y servicios complementarios. Este proyecto permite gestionar y versionar toda la infraestructura de manera automatizada y reproducible con Terraform.
 
