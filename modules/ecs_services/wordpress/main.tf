@@ -1,9 +1,3 @@
-resource "random_password" "random_password" {
-  length    = 8
-  special   = false
-  min_upper = 1
-}
-
 module "wordpress_task" {
   source = "../../ecs_task"
 
@@ -27,7 +21,7 @@ module "wordpress_task" {
     environment = {
       WORDPRESS_DB_HOST     = "postgres.dev.local:5432"
       WORDPRESS_DB_USER     = "wordpress"
-      WORDPRESS_DB_PASSWORD = random_password.random_password.result
+      WORDPRESS_DB_PASSWORD = "${var.environment}.wordpress"
       WORDPRESS_DB_NAME     = "wordpress"
     }
     secrets = {}
