@@ -3,34 +3,57 @@
 #############################
 
 resource "aws_security_group" "alb_sg" {
-  name   = "${var.environment}-${var.project}-alb-sg"
-  vpc_id = var.vpc_id
+  name        = "${var.environment}-${var.project}-alb-sg"
+  description = "Security Group for Application Load Balancer"
+  vpc_id      = var.vpc_id
+  tags = {
+    "Name" = "${var.environment}-${var.project}-alb-sg"
+  }
 }
 
 resource "aws_security_group" "wordpress_sg" {
-  name   = "${var.environment}-${var.project}-wordpress-sg"
-  vpc_id = var.vpc_id
+  name        = "${var.environment}-${var.project}-wordpress-sg"
+  description = "Security Group for WordPress"
+  vpc_id      = var.vpc_id
+  tags = {
+    "Name" = "${var.environment}-${var.project}-wordpress-sg"
+  }
 }
 
 resource "aws_security_group" "postgresql_sg" {
-  name   = "${var.environment}-${var.project}-postgresql-sg"
-  vpc_id = var.vpc_id
+  name        = "${var.environment}-${var.project}-postgresql-sg"
+  description = "Security Group for PostgreSQL"
+  vpc_id      = var.vpc_id
+  tags = {
+    "Name" = "${var.environment}-${var.project}-postgresql-sg"
+  }
 }
 
 resource "aws_security_group" "efs_sg" {
   name        = "${var.environment}-${var.project}-efs-sg"
   description = "Security Group for EFS access"
   vpc_id      = var.vpc_id
+  tags = {
+    "Name" = "${var.environment}-${var.project}-efs-sg"
+  }
 }
 
 resource "aws_security_group" "react_sg" {
-  name   = "${var.environment}-${var.project}-react-sg"
-  vpc_id = var.vpc_id
+  name        = "${var.environment}-${var.project}-react-sg"
+  description = "Security Group for React frontend"
+  vpc_id      = var.vpc_id
+  tags = {
+    "Name" = "${var.environment}-${var.project}-react-sg"
+  }
 }
 
 resource "aws_security_group" "nestjs_sg" {
-  name   = "${var.environment}-${var.project}-nestjs-sg"
-  vpc_id = var.vpc_id
+  name        = "${var.environment}-${var.project}-nestjs-sg"
+  description = "Security Group for NestJS backend"
+  vpc_id      = var.vpc_id
+  tags = {
+    "Name" = "${var.environment}-${var.project}-nestjs-sg"
+  }
 }
 
 

@@ -9,7 +9,7 @@ resource "aws_route53_record" "root" {
   alias {
     name                   = var.alb_dns_name
     zone_id                = var.alb_zone_id
-    evaluate_target_health = false
+    evaluate_target_health = true
   }
 }
 
@@ -20,13 +20,13 @@ resource "aws_route53_record" "www" {
   alias {
     name                   = var.alb_dns_name
     zone_id                = var.alb_zone_id
-    evaluate_target_health = false
+    evaluate_target_health = true
   }
 }
 
 resource "aws_route53_record" "app" {
   zone_id = data.aws_route53_zone.main.zone_id
-  name    = "app.var.domain_name"
+  name    = "app.${var.domain_name}"
   type    = "A"
   alias {
     name                   = var.alb_dns_name

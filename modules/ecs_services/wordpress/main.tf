@@ -19,7 +19,7 @@ module "wordpress_task" {
       }
     ]
     environment = {
-      WORDPRESS_DB_HOST     = "postgres.dev.local:5432"
+      WORDPRESS_DB_HOST     = "postgresql.local:5432"
       WORDPRESS_DB_USER     = "wordpress"
       WORDPRESS_DB_PASSWORD = "${var.environment}.wordpress"
       WORDPRESS_DB_NAME     = "wordpress"

@@ -53,4 +53,5 @@ variable "security_group_ids" {
 variable "target_group_arn" {
   description = "ARN of the target group for the ECS service"
   type        = string
+  default     = null
 }

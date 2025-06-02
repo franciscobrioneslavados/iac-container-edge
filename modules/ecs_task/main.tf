@@ -1,5 +1,5 @@
 resource "aws_cloudwatch_log_group" "this" {
-  name              = "ecs/${var.project}/${var.environment}/${var.service_name}"
+  name              = "/ecs/${var.project}/${var.environment}/${var.service_name}"
   retention_in_days = 7
 }
 
