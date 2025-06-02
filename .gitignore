@@ -1,0 +1,39 @@
+local/*
+tfplan
+# Local Terraform state files
+*.tfstate
+*.tfstate.*
+# Crash log files
+crash.log
+# Exclude Terraform variables files
+*.tfvars
+# Exclude override files
+override.tf
+override.tf.json
+# Exclude backup files
+*.tfbackup
+# Exclude Terraform lock files
+.terraform.lock.hcl
+# Exclude Terraform workspace files
+.terraform/
+# Exclude Terraform module cache
+.terraform/modules/
+# Exclude Terraform provider binaries
+.terraform/providers/
+# Exclude Terraform plugin cache
+.terraform/plugin-cache/
+# Exclude Terraform plan files
+*.tfplan
+# Exclude Terraform state files
+*.tfstate
+# Exclude Terraform state backup files
+*.tfstate.backup
+# Exclude Terraform state history files
+*.tfstate.history
+# Exclude Terraform state lock files
+*.tfstate.lock.info
+# Exclude Terraform state migration files
+*.tfstate.migration
+# Exclude Terraform state import files
+*.tfstate.import
+macbook-air.pem 
