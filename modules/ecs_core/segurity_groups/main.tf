@@ -1,59 +1,55 @@
-#############################
-# Security Groups
-#############################
-
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.environment}-${var.project}-alb-sg"
+  name        = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-alb-sg"
   description = "Security Group for Application Load Balancer"
   vpc_id      = var.vpc_id
-  tags = {
-    "Name" = "${var.environment}-${var.project}-alb-sg"
-  }
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-alb-sg"
+  })
 }
 
 resource "aws_security_group" "wordpress_sg" {
-  name        = "${var.environment}-${var.project}-wordpress-sg"
+  name        = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-wordpress-sg"
   description = "Security Group for WordPress"
   vpc_id      = var.vpc_id
-  tags = {
-    "Name" = "${var.environment}-${var.project}-wordpress-sg"
-  }
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-wordpress-sg"
+  })
 }
 
 resource "aws_security_group" "postgresql_sg" {
-  name        = "${var.environment}-${var.project}-postgresql-sg"
+  name        = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-postgresql-sg"
   description = "Security Group for PostgreSQL"
   vpc_id      = var.vpc_id
-  tags = {
-    "Name" = "${var.environment}-${var.project}-postgresql-sg"
-  }
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-postgresql-sg"
+  })
 }
 
 resource "aws_security_group" "efs_sg" {
-  name        = "${var.environment}-${var.project}-efs-sg"
+  name        = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-efs-sg"
   description = "Security Group for EFS access"
   vpc_id      = var.vpc_id
-  tags = {
-    "Name" = "${var.environment}-${var.project}-efs-sg"
-  }
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-efs-sg"
+  })
 }
 
 resource "aws_security_group" "react_sg" {
-  name        = "${var.environment}-${var.project}-react-sg"
+  name        = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-react-sg"
   description = "Security Group for React frontend"
   vpc_id      = var.vpc_id
-  tags = {
-    "Name" = "${var.environment}-${var.project}-react-sg"
-  }
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-react-sg"
+  })
 }
 
 resource "aws_security_group" "nestjs_sg" {
-  name        = "${var.environment}-${var.project}-nestjs-sg"
+  name        = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-nestjs-sg"
   description = "Security Group for NestJS backend"
   vpc_id      = var.vpc_id
-  tags = {
-    "Name" = "${var.environment}-${var.project}-nestjs-sg"
-  }
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["Project"]}-${var.global_tags["Environment"]}-nestjs-sg"
+  })
 }
 
 

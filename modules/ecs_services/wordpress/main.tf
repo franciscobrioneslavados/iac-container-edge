@@ -7,8 +7,7 @@ module "wordpress_task" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  project                  = var.project
-  environment              = var.environment
+  global_tags              = var.global_tags
   service_config = {
     image = "wordpress:6"
     port_mappings = [
@@ -21,7 +20,7 @@ module "wordpress_task" {
     environment = {
       WORDPRESS_DB_HOST     = "postgresql.local:5432"
       WORDPRESS_DB_USER     = "wordpress"
-      WORDPRESS_DB_PASSWORD = "${var.environment}.wordpress"
+      WORDPRESS_DB_PASSWORD = "${var.global_tags["Environment"]}.wordpress"
       WORDPRESS_DB_NAME     = "wordpress"
     }
     secrets = {}
@@ -33,6 +32,7 @@ module "wordpress_task" {
       }
     ]
   }
+
 }
 
 resource "aws_ecs_service" "wordpress" {

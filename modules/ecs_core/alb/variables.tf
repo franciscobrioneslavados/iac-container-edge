@@ -33,3 +33,26 @@ variable "domain_name" {
   description = "Nombre de dominio para el ALB"
   type        = string
 }
+
+variable "global_tags" {
+  description = "Etiquetas globales para todos los recursos"
+  type        = map(string)
+  default     = {}
+}
+
+variable "enable_access_logs" {
+  description = "Habilitar registros de acceso para el ALB"
+  type        = bool
+  default     = false
+}
+
+variable "enable_waf" {
+  description = "Habilitar AWS WAF para el ALB"
+  type        = bool
+  default     = false
+}
+
+variable "certificate_arn" {
+  description = "ARN del certificado SSL para el ALB"
+  type        = string
+}

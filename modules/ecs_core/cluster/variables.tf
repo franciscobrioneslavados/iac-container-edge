@@ -9,3 +9,9 @@ variable "project" {
   type        = string
   default     = "container-edge"
 }
+
+variable "global_tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default     = {}
+}

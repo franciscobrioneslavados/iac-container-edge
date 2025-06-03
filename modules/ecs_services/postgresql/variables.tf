@@ -3,16 +3,6 @@ variable "execution_role_arn" {
   type        = string
 }
 
-variable "project" {
-  description = "Project name for the ECS service"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment name (e.g., dev, prod)"
-  type        = string
-}
-
 variable "efs_id" {
   description = "EFS ID for persistent storage"
   type        = string
@@ -48,4 +38,10 @@ variable "launch_type" {
 variable "registry_arn" {
   description = "ARN of the service registry for ECS service discovery"
   type        = string
+}
+
+variable "global_tags" {
+  description = "Global tags for all resources"
+  type        = map(string)
+  default     = {}
 }

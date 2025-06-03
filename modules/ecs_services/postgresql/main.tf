@@ -1,15 +1,13 @@
-
 module "postgresql_task" {
   source = "../../ecs_task"
-  
+
   service_name             = "postgresql"
   execution_role_arn       = var.execution_role_arn
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
   memory                   = "1024"
-  project                  = var.project
-  environment              = var.environment
+  global_tags              = var.global_tags
   service_config = {
     image = "postgres:17"
     port_mappings = [
@@ -21,7 +19,7 @@ module "postgresql_task" {
     ]
     environment = {
       POSTGRES_USER     = "wordpress"
-      POSTGRES_PASSWORD = "${var.environment}.wordpress"
+      POSTGRES_PASSWORD = "${var.global_tags["Environment"]}.wordpress"
       POSTGRES_DB       = "wordpress"
     }
     secrets = {}
@@ -51,6 +49,6 @@ resource "aws_ecs_service" "postgresql" {
   service_registries {
     registry_arn = var.registry_arn
   }
-  
-  depends_on = [ module.postgresql_task ]
+
+  depends_on = [module.postgresql_task]
 }

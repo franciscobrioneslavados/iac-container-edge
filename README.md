@@ -32,6 +32,19 @@ terraform plan -var-file="default.tfvars" --out tfplan
 terraform apply "tfplan"
 ```
 
+## Despliegue por módulo
+
+Si deseas desplegar únicamente un módulo específico (por ejemplo, solo la VPC), puedes utilizar el parámetro `-target` de Terraform. Por ejemplo:
+
+```sh
+terraform init
+terraform plan -var-file="default.tfvars" -target=module.vpc
+terraform apply -var-file="default.tfvars" -target=module.vpc
+```
+
+Esto aplicará únicamente los recursos definidos en el módulo indicado. Puedes cambiar `module.vpc` por cualquier otro módulo según lo necesites.
+
+
 ## Ver los outputs
 
 ### Después de aplicar tu plan, puedes ver los valores de salida definidos en tus módulos con:

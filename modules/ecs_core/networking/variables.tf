@@ -21,4 +21,10 @@ variable "single_nat_gateway" {
   description = "true to use a single NAT gateway, false to use one per AZ"
 }
 
+variable "global_tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default     = {}
+}
+
 

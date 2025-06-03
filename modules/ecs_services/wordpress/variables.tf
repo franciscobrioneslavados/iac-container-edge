@@ -3,16 +3,6 @@ variable "execution_role_arn" {
   type        = string
 }
 
-variable "project" {
-  description = "Nombre del proyecto para la tarea ECS"
-  type        = string
-}
-
-variable "environment" {
-  description = "Nombre del entorno para la tarea ECS"
-  type        = string
-}
-
 variable "efs_id" {
   description = "ID del sistema de archivos EFS para WordPress"
   type        = string
@@ -54,4 +44,10 @@ variable "target_group_arn" {
   description = "ARN of the target group for the ECS service"
   type        = string
   default     = null
+}
+
+variable "global_tags" {
+  description = "Global tags for all resources"
+  type        = map(string)
+  default     = {}
 }

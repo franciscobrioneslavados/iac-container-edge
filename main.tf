@@ -13,6 +13,19 @@ provider "aws" {
   }
 }
 
+locals {
+  global_tags = {
+    "Environment" = var.environment
+    "ManagedBy"   = var.managed_by
+    "Owner"       = var.owner
+    "Project"     = var.project
+  }
+}
+
+data "aws_route53_zone" "main" {
+  name = var.domain_name
+}
+
 terraform {
   required_version = ">= 0.13"
   backend "s3" {
@@ -46,15 +59,17 @@ module "vpc" {
   project            = var.project
   vpc_cidr           = var.vpc_cidr
   single_nat_gateway = var.single_nat_gateway
+  global_tags        = local.global_tags
 }
 
 module "security_groups" {
   source = "./modules/ecs_core/segurity_groups"
 
-  environment = var.environment
-  project     = var.project
   vpc_id      = module.vpc.vpc_id
   vpc_cidr    = var.vpc_cidr
+  global_tags = local.global_tags
+
+  depends_on = [module.vpc]
 }
 
 module "service_discovery" {
@@ -68,6 +83,24 @@ module "service_discovery" {
   depends_on = [module.vpc]
 }
 
+module "route53" {
+  source = "./modules/ecs_core/route53"
+
+  domain_name  = var.domain_name
+  zone_id      = data.aws_route53_zone.main.zone_id
+  alb_dns_name = module.alb.alb_dns_name
+  alb_zone_id  = module.alb.zone_id
+  global_tags  = local.global_tags
+}
+
+module "acm" {
+  source = "./modules/ecs_core/acm"
+
+  domain_name = var.domain_name
+  zone_id     = data.aws_route53_zone.main.zone_id
+  global_tags = local.global_tags
+}
+
 module "alb" {
   source = "./modules/ecs_core/alb"
 
@@ -79,18 +112,12 @@ module "alb" {
   wordpress_target_group_name = "wordpress-tg"
   react_target_group_name     = "react-tg"
   domain_name                 = var.domain_name
+  global_tags                 = local.global_tags
+  enable_access_logs          = false
+  enable_waf                  = false
+  certificate_arn             = module.acm.acm_certificate_arn
 
   depends_on = [module.vpc, module.security_groups]
-}
-
-module "route53" {
-  source = "./modules/ecs_core/route53"
-
-  domain_name  = var.domain_name
-  alb_dns_name = module.alb.alb_dns_name
-  alb_zone_id  = module.alb.zone_id
-
-  depends_on = [module.alb]
 }
 
 module "ecs_cluster" {
@@ -98,6 +125,7 @@ module "ecs_cluster" {
 
   environment = var.environment
   project     = var.project
+  global_tags = local.global_tags
 }
 
 module "efs_postgresql" {
@@ -128,8 +156,6 @@ module "efs_wordpress" {
 module "postgresql_service" {
   source = "./modules/ecs_services/postgresql"
 
-  project        = var.project
-  environment    = var.environment
   efs_id         = module.efs_postgresql.efs_id
   ecs_cluster_id = module.ecs_cluster.ecs_cluster_id
   desired_count  = 1
@@ -139,13 +165,13 @@ module "postgresql_service" {
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
   registry_arn       = module.service_discovery.service_arns["postgresql"]
 
+  global_tags = local.global_tags
+
 }
 
 module "wordpress_service" {
   source = "./modules/ecs_services/wordpress"
 
-  project        = var.project
-  environment    = var.environment
   efs_id         = module.efs_wordpress.efs_id
   ecs_cluster_id = module.ecs_cluster.ecs_cluster_id
   desired_count  = 1
@@ -155,6 +181,8 @@ module "wordpress_service" {
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
   registry_arn       = module.service_discovery.service_arns["wordpress"]
   target_group_arn   = module.alb.wordpress_target_group_arn
+
+  global_tags = local.global_tags
 
   depends_on = [module.efs_wordpress]
 }

@@ -1,13 +1,3 @@
-variable "environment" {
-  description = "Environment variables for the ECS task"
-  type        = string
-}
-
-variable "project" {
-  description = "Project name for the ECS task"
-  type        = string
-}
-
 variable "service_name" {
   description = "Nombre del servicio ECS"
   type        = string
@@ -59,4 +49,10 @@ variable "service_config" {
       root_directory = optional(string)
     })), [])
   })
+}
+
+variable "global_tags" {
+  description = "Etiquetas globales para todos los recursos"
+  type        = map(string)
+  default     = {}
 }

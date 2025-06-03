@@ -1,6 +1,6 @@
 resource "aws_cloudwatch_log_group" "this" {
-  name              = "/ecs/${var.project}/${var.environment}/${var.service_name}"
-  retention_in_days = 7
+  name              = "/ecs/${var.global_tags["Project"]}/${var.global_tags["Environment"]}/${var.service_name}"
+  retention_in_days = var.global_tags["Environment"] == "production" ? 30 : 7
 }
 
 resource "aws_ecs_task_definition" "this" {
