@@ -1,189 +1,188 @@
-provider "aws" {
-  region  = var.aws_region
-  alias   = "virginia"
-  profile = "personal"
-
-  default_tags {
-    tags = {
-      "Environment" = var.environment
-      "ManagedBy"   = var.managed_by
-      "Owner"       = var.owner
-      "Project"     = var.project
-    }
-  }
+data "aws_vpc" "selected" {
+  id = var.vpc_id
 }
 
 locals {
   global_tags = {
     "Environment" = var.environment
     "ManagedBy"   = var.managed_by
-    "Owner"       = var.owner
-    "Project"     = var.project
+    "OwnerName"   = var.owner_name
+    "ProjectName" = var.project_name
   }
+
+  sd_services = {
+    # Base de datos - A + SRV para descubrimiento automático de puerto
+    mariadb = {
+      name = "mariadb"
+      dns_records = [
+        {
+          type = "A"
+          ttl  = 10
+        },
+        {
+          type = "SRV"
+          ttl  = 10
+        }
+      ]
+      routing_policy                 = "MULTIVALUE"
+      health_check_failure_threshold = 1
+    }
+
+    # WordPress - A + SRV para descubrimiento automático de puerto 8080
+    wordpress = {
+      name = "wordpress"
+      dns_records = [
+        {
+          type = "A"
+          ttl  = 10
+        },
+        {
+          type = "SRV"
+          ttl  = 10
+        }
+      ]
+      routing_policy                 = "MULTIVALUE"
+      health_check_failure_threshold = 1
+    }
+
+    # Backend APIs - Solo A (puerto conocido en código)
+    nestjs-backend = {
+      name = "nestjs"
+      dns_records = [
+        {
+          type = "A"
+          ttl  = 10
+        }
+      ]
+      routing_policy                 = "MULTIVALUE"
+      health_check_failure_threshold = 1
+    }
+
+    python-analytics = {
+      name = "python"
+      dns_records = [
+        {
+          type = "A"
+          ttl  = 10
+        }
+      ]
+      routing_policy                 = "MULTIVALUE"
+      health_check_failure_threshold = 1
+    }
+
+    # Frontends SPAs - Solo A (puerto conocido en NGINX)
+    angular-frontend = {
+      name = "angular"
+      dns_records = [
+        {
+          type = "A"
+          ttl  = 10
+        }
+      ]
+      routing_policy                 = "MULTIVALUE"
+      health_check_failure_threshold = 1
+    }
+
+    react-frontend = {
+      name = "react"
+      dns_records = [
+        {
+          type = "A"
+          ttl  = 10
+        }
+      ]
+      routing_policy                 = "MULTIVALUE"
+      health_check_failure_threshold = 1
+    }
+  }
+
+  vpc_dns_resolver = cidrhost(data.aws_vpc.selected.cidr_block, 2)
 }
 
-data "aws_route53_zone" "main" {
-  name = var.domain_name
-}
+module "services_discovery" {
+  source = "./modules/services_discovery/private"
 
-terraform {
-  required_version = ">= 0.13"
-  backend "s3" {
-    bucket = "s3-777790172967-terraform-states"
-    key    = "ecs_wordpress.tfstate"
-    region = "us-east-1"
-    # dynamodb_table = "terraform-locks"
-    encrypt = false
-    # use_lockfile = true # Native s3 locking
-  }
-  required_providers {
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3" #3.7.1
-    }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5" #5.94.1
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3" #3.2.3
-    }
-  }
-}
+  vpc_id         = var.vpc_id
+  services       = local.sd_services
+  namespace_name = var.namespace_name
 
-module "vpc" {
-  source = "./modules/ecs_core/networking"
-
-  environment        = var.environment
-  project            = var.project
-  vpc_cidr           = var.vpc_cidr
-  single_nat_gateway = var.single_nat_gateway
-  global_tags        = local.global_tags
+  global_tags = local.global_tags
 }
 
 module "security_groups" {
-  source = "./modules/ecs_core/segurity_groups"
+  source = "./modules/segurity_groups"
 
-  vpc_id      = module.vpc.vpc_id
-  vpc_cidr    = var.vpc_cidr
+  vpc_id      = var.vpc_id
+  cidr_blocks = var.cidr_blocks
   global_tags = local.global_tags
-
-  depends_on = [module.vpc]
-}
-
-module "service_discovery" {
-  source = "./modules/ecs_core/services_discovery"
-
-  namespace_name         = "local"
-  discovery_service_name = ["wordpress", "postgresql", "reactjs", "nestjs"]
-  vpc_id                 = module.vpc.vpc_id
-  environment            = var.environment
-
-  depends_on = [module.vpc]
-}
-
-module "route53" {
-  source = "./modules/ecs_core/route53"
-
-  domain_name  = var.domain_name
-  zone_id      = data.aws_route53_zone.main.zone_id
-  alb_dns_name = module.alb.alb_dns_name
-  alb_zone_id  = module.alb.zone_id
-  global_tags  = local.global_tags
-}
-
-module "acm" {
-  source = "./modules/ecs_core/acm"
-
-  domain_name = var.domain_name
-  zone_id     = data.aws_route53_zone.main.zone_id
-  global_tags = local.global_tags
-}
-
-module "alb" {
-  source = "./modules/ecs_core/alb"
-
-  alb_name                    = "alb-${var.project}-${var.environment}"
-  alb_internal                = false
-  alb_security_groups         = [module.security_groups.sg_alb_id]
-  alb_subnets                 = module.vpc.public_subnets
-  vpc_id                      = module.vpc.vpc_id
-  wordpress_target_group_name = "wordpress-tg"
-  react_target_group_name     = "react-tg"
-  domain_name                 = var.domain_name
-  global_tags                 = local.global_tags
-  enable_access_logs          = false
-  enable_waf                  = false
-  certificate_arn             = module.acm.acm_certificate_arn
-
-  depends_on = [module.vpc, module.security_groups]
 }
 
 module "ecs_cluster" {
-  source = "./modules/ecs_core/cluster"
+  source = "./modules/ecs_cluster"
 
-  environment = var.environment
-  project     = var.project
-  global_tags = local.global_tags
+  namespace_name = module.services_discovery.namespace_arn
+  global_tags    = local.global_tags
 }
 
-module "efs_postgresql" {
-  source = "./modules/ecs_core/storage/efs"
+module "efs_mariadb" {
+  source = "./modules/storage/efs"
 
-  efs_name              = "postgresql"
-  environment           = var.environment
-  project               = var.project
-  private_subnet_ids    = module.vpc.private_subnets
-  efs_security_group_id = module.security_groups.sg_efs_id
-
-  depends_on = [module.vpc, module.security_groups]
-
+  deploy_efs         = var.environment == "production" ? true : false
+  efs_name           = "mariadb"
+  efs_purpose        = "Database"
+  private_subnet_ids = var.private_subnet_ids
+  security_groups    = [module.security_groups.efs_security_group_id]
+  global_tags        = local.global_tags
 }
 
 module "efs_wordpress" {
-  source = "./modules/ecs_core/storage/efs"
+  source = "./modules/storage/efs"
 
-  efs_name              = "wordpress"
-  environment           = var.environment
-  project               = var.project
-  private_subnet_ids    = module.vpc.private_subnets
-  efs_security_group_id = module.security_groups.sg_efs_id
-
-  depends_on = [module.vpc, module.security_groups]
+  deploy_efs         = var.environment == "production" ? true : false
+  efs_name           = "wordpress"
+  efs_purpose        = "Storage"
+  private_subnet_ids = var.private_subnet_ids
+  security_groups    = [module.security_groups.efs_security_group_id]
+  global_tags        = local.global_tags
 }
 
-module "postgresql_service" {
-  source = "./modules/ecs_services/postgresql"
+module "mariadb_service" {
+  source = "./modules/ecs_services/mariadb"
 
-  efs_id         = module.efs_postgresql.efs_id
+  deploy_efs = var.environment == "production" ? true : false
+  efs_id     = var.environment == "production" ? module.efs_mariadb.efs_id : null
+
   ecs_cluster_id = module.ecs_cluster.ecs_cluster_id
   desired_count  = 1
 
-  subnet_ids         = module.vpc.private_subnets
-  security_group_ids = [module.security_groups.sg_postgresql_id]
-  execution_role_arn = aws_iam_role.ecs_task_execution.arn
-  registry_arn       = module.service_discovery.service_arns["postgresql"]
+  subnet_ids            = var.private_subnet_ids
+  security_group_ids    = [module.security_groups.ecs_security_group_ids["mariadb"]]
+  execution_role_arn    = aws_iam_role.ecs_task_execution.arn
+  task_role_arn         = aws_iam_role.ecs_task.arn
+  discovery_service_arn = module.services_discovery.service_arns["mariadb"]
 
   global_tags = local.global_tags
-
+  depends_on  = [module.services_discovery]
 }
 
 module "wordpress_service" {
   source = "./modules/ecs_services/wordpress"
 
-  efs_id         = module.efs_wordpress.efs_id
+  deploy_efs = var.environment == "production" ? true : false
+  efs_id     = var.environment == "production" ? module.efs_wordpress.efs_id : null
+
   ecs_cluster_id = module.ecs_cluster.ecs_cluster_id
   desired_count  = 1
 
-  subnet_ids         = module.vpc.private_subnets
-  security_group_ids = [module.security_groups.sg_wordpress_id]
-  execution_role_arn = aws_iam_role.ecs_task_execution.arn
-  registry_arn       = module.service_discovery.service_arns["wordpress"]
-  target_group_arn   = module.alb.wordpress_target_group_arn
+  subnet_ids               = var.private_subnet_ids
+  security_group_ids       = [module.security_groups.ecs_security_group_ids["wordpress"]]
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+  database_password_plain  = module.mariadb_service.database_password_plain
+  database_password_arn    = module.mariadb_service.database_password_arn
+  mariadb_service_endpoint = "${module.services_discovery.service_names["mariadb"]}.${var.namespace_name}"
+  discovery_service_arn    = module.services_discovery.service_arns["wordpress"]
 
   global_tags = local.global_tags
-
-  depends_on = [module.efs_wordpress]
+  depends_on  = [module.services_discovery]
 }
-

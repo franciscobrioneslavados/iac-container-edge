@@ -1,0 +1,380 @@
+# Security Groups Based on application architecture
+resource "aws_security_group" "alb_sg" {
+  name        = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-alb-sg"
+  description = "Security Group for Application Load Balancer"
+  vpc_id      = var.vpc_id
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-alb-sg"
+  })
+}
+
+resource "aws_security_group" "wordpress_sg" {
+  name        = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-wordpress-sg"
+  description = "Security Group for WordPress Frontend"
+  vpc_id      = var.vpc_id
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-wordpress-sg"
+  })
+}
+
+resource "aws_security_group" "react_sg" {
+  name        = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-react-sg"
+  description = "Security Group for React Frontend"
+  vpc_id      = var.vpc_id
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-react-sg"
+  })
+}
+
+resource "aws_security_group" "angular_sg" {
+  name        = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-angular-sg"
+  description = "Security Group for Angular Frontend"
+  vpc_id      = var.vpc_id
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-angular-sg"
+  })
+}
+
+resource "aws_security_group" "nestjs_sg" {
+  name        = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-nestjs-sg"
+  description = "Security Group for NestJS Backend API"
+  vpc_id      = var.vpc_id
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-nestjs-sg"
+  })
+}
+
+resource "aws_security_group" "python_sg" {
+  name        = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-python-sg"
+  description = "Security Group for Python Backend API"
+  vpc_id      = var.vpc_id
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-python-sg"
+  })
+}
+
+resource "aws_security_group" "postgresql_sg" {
+  name        = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-postgresql-sg"
+  description = "Security Group for PostgreSQL Database"
+  vpc_id      = var.vpc_id
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-postgresql-sg"
+  })
+}
+
+resource "aws_security_group" "efs_sg" {
+  name        = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-efs-sg"
+  description = "Security Group for EFS access"
+  vpc_id      = var.vpc_id
+  tags = merge(var.global_tags, {
+    "Name" = "${var.global_tags["ProjectName"]}-${var.global_tags["Environment"]}-efs-sg"
+  })
+}
+
+# ALB Ingress
+resource "aws_security_group_rule" "alb_http_in" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.alb_sg.id
+  description       = "Allow HTTP traffic from anywhere"
+}
+
+# ALB Egress solo a Frontend Tier
+resource "aws_security_group_rule" "alb_to_wordpress" {
+  type                     = "egress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.wordpress_sg.id
+  security_group_id        = aws_security_group.alb_sg.id
+  description              = "Allow to WordPress frontend"
+}
+
+resource "aws_security_group_rule" "alb_to_react" {
+  type                     = "egress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.react_sg.id
+  security_group_id        = aws_security_group.alb_sg.id
+  description              = "Allow to React frontend"
+}
+
+resource "aws_security_group_rule" "alb_to_angular" {
+  type                     = "egress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.angular_sg.id
+  security_group_id        = aws_security_group.alb_sg.id
+  description              = "Allow to Angular frontend"
+}
+
+
+# WordPress - Recibe de NGINX, consulta Backend Tier y Database Tier
+resource "aws_security_group_rule" "wordpress_http_in" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.alb_sg.id
+  security_group_id        = aws_security_group.wordpress_sg.id
+  description              = "Allow HTTP from NGINX ALB"
+}
+
+# WordPress consulta Backend Tier (APIs)
+resource "aws_security_group_rule" "wordpress_to_nestjs" {
+  type                     = "egress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.nestjs_sg.id
+  security_group_id        = aws_security_group.wordpress_sg.id
+  description              = "Allow WordPress to NestJS API"
+}
+
+resource "aws_security_group_rule" "wordpress_to_python" {
+  type                     = "egress"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.python_sg.id
+  security_group_id        = aws_security_group.wordpress_sg.id
+  description              = "Allow WordPress to Python API"
+}
+
+# WordPress consulta Database Tier directamente
+resource "aws_security_group_rule" "wordpress_to_postgres" {
+  type                     = "egress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.postgresql_sg.id
+  security_group_id        = aws_security_group.wordpress_sg.id
+  description              = "Allow WordPress to PostgreSQL"
+}
+
+# React - Recibe de NGINX, consulta Backend Tier
+resource "aws_security_group_rule" "react_http_in" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.alb_sg.id
+  security_group_id        = aws_security_group.react_sg.id
+  description              = "Allow HTTP from NGINX ALB"
+}
+
+resource "aws_security_group_rule" "react_to_nestjs" {
+  type                     = "egress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.nestjs_sg.id
+  security_group_id        = aws_security_group.react_sg.id
+  description              = "Allow React to NestJS API"
+}
+
+resource "aws_security_group_rule" "react_to_python" {
+  type                     = "egress"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.python_sg.id
+  security_group_id        = aws_security_group.react_sg.id
+  description              = "Allow React to Python API"
+}
+
+# Angular - Recibe de NGINX, consulta Backend Tier  
+resource "aws_security_group_rule" "angular_http_in" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.alb_sg.id
+  security_group_id        = aws_security_group.angular_sg.id
+  description              = "Allow HTTP from NGINX ALB"
+}
+
+resource "aws_security_group_rule" "angular_to_nestjs" {
+  type                     = "egress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.nestjs_sg.id
+  security_group_id        = aws_security_group.angular_sg.id
+  description              = "Allow Angular to NestJS API"
+}
+
+resource "aws_security_group_rule" "angular_to_python" {
+  type                     = "egress"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.python_sg.id
+  security_group_id        = aws_security_group.angular_sg.id
+  description              = "Allow Angular to Python API"
+}
+
+# NestJS - Recibe de Frontend Tier, consulta Database Tier
+resource "aws_security_group_rule" "nestjs_in_from_frontends" {
+  type                     = "ingress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.wordpress_sg.id
+  security_group_id        = aws_security_group.nestjs_sg.id
+  description              = "Allow NestJS from WordPress"
+}
+
+resource "aws_security_group_rule" "nestjs_in_from_react" {
+  type                     = "ingress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.react_sg.id
+  security_group_id        = aws_security_group.nestjs_sg.id
+  description              = "Allow NestJS from React"
+}
+
+resource "aws_security_group_rule" "nestjs_in_from_angular" {
+  type                     = "ingress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.angular_sg.id
+  security_group_id        = aws_security_group.nestjs_sg.id
+  description              = "Allow NestJS from Angular"
+}
+
+# NestJS consulta Database Tier
+resource "aws_security_group_rule" "nestjs_to_postgres" {
+  type                     = "egress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.postgresql_sg.id
+  security_group_id        = aws_security_group.nestjs_sg.id
+  description              = "Allow NestJS to PostgreSQL"
+}
+
+# Python API - Recibe de Frontend Tier, consulta Database Tier
+resource "aws_security_group_rule" "python_in_from_frontends" {
+  type                     = "ingress"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.wordpress_sg.id
+  security_group_id        = aws_security_group.python_sg.id
+  description              = "Allow Python API from WordPress"
+}
+
+resource "aws_security_group_rule" "python_in_from_react" {
+  type                     = "ingress"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.react_sg.id
+  security_group_id        = aws_security_group.python_sg.id
+  description              = "Allow Python API from React"
+}
+
+resource "aws_security_group_rule" "python_in_from_angular" {
+  type                     = "ingress"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.angular_sg.id
+  security_group_id        = aws_security_group.python_sg.id
+  description              = "Allow Python API from Angular"
+}
+
+# Python consulta Database Tier
+resource "aws_security_group_rule" "python_to_postgres" {
+  type                     = "egress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.postgresql_sg.id
+  security_group_id        = aws_security_group.python_sg.id
+  description              = "Allow Python API to PostgreSQL"
+}
+
+# PostgreSQL - Recibe de Backend Tier y WordPress directamente
+resource "aws_security_group_rule" "postgresql_in_wordpress" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.wordpress_sg.id
+  security_group_id        = aws_security_group.postgresql_sg.id
+  description              = "Allow PostgreSQL from WordPress"
+}
+
+resource "aws_security_group_rule" "postgresql_in_nestjs" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.nestjs_sg.id
+  security_group_id        = aws_security_group.postgresql_sg.id
+  description              = "Allow PostgreSQL from NestJS"
+}
+
+resource "aws_security_group_rule" "postgresql_in_python" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.python_sg.id
+  security_group_id        = aws_security_group.postgresql_sg.id
+  description              = "Allow PostgreSQL from Python API"
+}
+
+# EFS Security Group - Para WordPress y PostgreSQL (si usan EFS)
+resource "aws_security_group_rule" "efs_nfs_in_wordpress" {
+  type                     = "ingress"
+  from_port                = 2049
+  to_port                  = 2049
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.wordpress_sg.id
+  security_group_id        = aws_security_group.efs_sg.id
+  description              = "Allow NFS from WordPress"
+}
+
+resource "aws_security_group_rule" "efs_nfs_in_postgresql" {
+  type                     = "ingress"
+  from_port                = 2049
+  to_port                  = 2049
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.postgresql_sg.id
+  security_group_id        = aws_security_group.efs_sg.id
+  description              = "Allow NFS from PostgreSQL"
+}
+
+locals {
+  app_sg_map = {
+    wordpress  = aws_security_group.wordpress_sg.id
+    react      = aws_security_group.react_sg.id
+    angular    = aws_security_group.angular_sg.id
+    nestjs     = aws_security_group.nestjs_sg.id
+    python     = aws_security_group.python_sg.id
+    postgresql = aws_security_group.postgresql_sg.id
+  }
+}
+
+# EGRESS GENERAL PARA HTTPS (menos seguro pero más simple)
+resource "aws_security_group_rule" "general_https_egress" {
+  for_each = local.app_sg_map
+
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = each.value
+  cidr_blocks       = ["0.0.0.0/0"]
+  description       = "Permitir HTTPS hacia Internet"
+}

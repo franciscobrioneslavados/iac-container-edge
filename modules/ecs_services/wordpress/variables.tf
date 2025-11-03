@@ -1,10 +1,10 @@
 variable "execution_role_arn" {
-  description = "ARN del rol de ejecución de la tarea ECS"
+  description = "ARN of the ECS task execution role"
   type        = string
 }
 
-variable "efs_id" {
-  description = "ID del sistema de archivos EFS para WordPress"
+variable "task_role_arn" {
+  description = "ARN of the ECS task role"
   type        = string
 }
 
@@ -14,15 +14,9 @@ variable "ecs_cluster_id" {
 }
 
 variable "desired_count" {
-  description = "values for the desired count of the ECS service"
+  description = "Desired number of task instances"
   type        = number
   default     = 1
-}
-
-variable "launch_type" {
-  description = "Launch type for the ECS service (FARGATE or EC2)"
-  type        = string
-  default     = "FARGATE"
 }
 
 variable "subnet_ids" {
@@ -30,24 +24,51 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
-variable "registry_arn" {
-  description = "ARN of the service registry for the ECS service"
-  type        = string
-}
-
 variable "security_group_ids" {
   description = "List of security group IDs for the ECS service"
   type        = list(string)
 }
+variable "launch_type" {
+  description = "Launch type for the ECS service (FARGATE or EC2)"
+  type        = string
+  default     = "FARGATE"
+}
 
-variable "target_group_arn" {
-  description = "ARN of the target group for the ECS service"
+variable "discovery_service_arn" {
+  description = "Service Discovery Service ARN for ECS service registration"
+  type        = string
+}
+
+variable "mariadb_service_endpoint" {
+  description = "Endpoint to connect to the MariaDB service"
+  type        = string
+}
+
+variable "deploy_efs" {
+  description = "Enable EFS for persistent storage"
+  type        = bool
+}
+
+variable "efs_id" {
+  description = "EFS filesystem id (nullable)."
   type        = string
   default     = null
 }
 
+variable "database_password_arn" {
+  type        = string
+  description = "ARN del secret de MariaDB (QA/Prod)"
+  default     = null
+}
+
+variable "database_password_plain" {
+  type        = string
+  description = "Password en texto plano para dev"
+  default     = null
+}
 variable "global_tags" {
   description = "Global tags for all resources"
   type        = map(string)
   default     = {}
 }
+

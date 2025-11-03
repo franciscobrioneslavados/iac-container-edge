@@ -35,8 +35,8 @@ variable "launch_type" {
   default     = "FARGATE"
 }
 
-variable "discovery_service_id" {
-  description = "Service Discovery Service ID for ECS service registration"
+variable "discovery_service_arn" {
+  description = "Service Discovery Service ARN for ECS service registration"
   type        = string
 }
 
